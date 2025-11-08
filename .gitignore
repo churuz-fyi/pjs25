@@ -23,4 +23,4 @@ frontend/*.njsproj
 frontend/*.sln
 frontend/*.sw?
 
-api/pb_data
+api/pb_data/auxiliary.db
