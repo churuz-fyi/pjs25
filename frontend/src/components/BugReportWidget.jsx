@@ -1,8 +1,22 @@
 import { useState, useEffect } from "react";
+import Pocketbase from "pocketbase";
 
 // Store recent errors
 const MAX_ERRORS = 50;
 const recentErrors = [];
+
+const pb = new Pocketbase("http://127.0.0.1:8090");
+
+async function submitBugReport(formData) {
+  try {
+    const record = await pb.collection("reports").create(formData);
+    console.log("Bug Report submitted:", record);
+    return { success: true, data: record };
+  } catch (err) {
+    console.error("Failed to submit bug report, error:", err);
+    return { success: false, error: err.message };
+  }
+}
 
 const pushError = (obj) => {
   try {
@@ -38,7 +52,7 @@ const setupErrorHandling = () => {
   });
 };
 
-export default function BugReportWidget({ config = { endpoint: "/api/reports" } }) {
+export default function BugReportWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -81,30 +95,25 @@ export default function BugReportWidget({ config = { endpoint: "/api/reports" } 
     setIsSending(true);
 
     try {
-      let res;
-      if (hasFile) {
-        // Using FormData (multipart)
-        res = await fetch(config.endpoint, { method: "POST", body: data });
-      } else {
-        // Convert to JSON for simpler endpoints
-        const json = {};
-        for (const [k, v] of data.entries()) {
-          if (k === "context") json[k] = JSON.parse(v);
-          else json[k] = v;
-        }
-        res = await fetch(config.endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(json),
-        });
-      }
+      const formData = new FormData(form);
+      const data = {
+        email: formData.get("email") || null,
+        category: formData.get("category")?.toLowerCase() || "bug",
+        severity: formData.get("severity")?.toLowerCase() || "low",
+        description: formData.get("description"),
+        pageUrl: formData.get("pageUrl") || window.location.href,
+        userAgent: navigator.userAgent,
+        consoleSnippet: formData.get("consoleSnippet") || null,
+        consent: Boolean(formData.get("consent")),
+      };
 
-      if (res && (res.ok || res.status === 201 || res.status === 200)) {
+      const result = await submitBugReport(data);
+
+      if (result.success) {
         setIsSubmitted(true);
         form.reset();
       } else {
-        const text = res ? await res.text().catch(() => "") : "";
-        alert("Failed to send report: " + (res ? res.statusText || text : "network error"));
+        alert("Failed to send report: " + result.error);
       }
     } catch (err) {
       console.error("brw:send", err);
@@ -119,14 +128,14 @@ export default function BugReportWidget({ config = { endpoint: "/api/reports" } 
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed right-5 bottom-5 z-[99999] bg-red-500 text-white border-none rounded-full px-4.5 py-3 font-semibold shadow-lg hover:bg-red-600 transition-colors cursor-pointer"
+        className="fixed right-5 bottom-5 z-99999 bg-red-500 text-white border-none rounded-full px-4.5 py-3 font-semibold shadow-lg hover:bg-red-600 transition-colors cursor-pointer"
         aria-label="Report a bug"
       >
         Report a bug
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100000]" onClick={(e) => e.target === e.currentTarget && setIsOpen(false)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100000" onClick={(e) => e.target === e.currentTarget && setIsOpen(false)}>
           <div className="w-[min(760px,95vw)] max-h-[90vh] overflow-auto bg-white rounded-xl p-4.5 shadow-xl font-sans">
             <h3 className="text-lg font-semibold m-0 mb-2">Report an issue</h3>
 
