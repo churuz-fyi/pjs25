@@ -5,7 +5,7 @@ import Pocketbase from "pocketbase";
 const MAX_ERRORS = 50;
 const recentErrors = [];
 
-const pb = new Pocketbase("http://127.0.0.1:8090");
+const pb = new Pocketbase("https://pjs25.onrender.com/");
 
 async function submitBugReport(formData) {
   try {
