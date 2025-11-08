@@ -1,12 +1,16 @@
-import React from 'react';
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
 
 function App() {
+  const [count, setCount] = useState(0);
+
   return (
-    <div>
-      <h1>PJS25</h1>
-    </div>
+    <>
+      <h1 className="text-red-700 text-center">hi</h1>
+    </>
   );
 }
 
 export default App;
-
