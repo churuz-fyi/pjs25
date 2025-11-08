@@ -1,17 +1,19 @@
 <script setup>
+      import PocketBase from 'pocketbase';
     import Issue from '../components/Issue.vue'
-    const data = {
-      email: "email@gmail.com",
-      pageUrl: "https://google.com",
-      category: "bug",
-      severity: "low"
-    }
+    const pb = new PocketBase('http://127.0.0.1:8090');
+    await pb.collection("_superusers").authWithPassword('ruizramos04@gmail.com','awesome123');
+    const results = await pb.collection('reports').getFullList();
+    console.log(results);
 </script>
 <template>
+      <div v-for="result in results.items" :key="result.id">{{result.collectionName}}</div>
       <Issue
-            :email=data.email 
-            :pageUrl=data.pageUrl
-            :category=data.category
-            :severity=data.severity
+            v-for="record in results"
+            :key="record.id"
+            :email="record.email" 
+            :pageUrl="record.pageUrl"
+            :category="record.category"
+            :severity="record.severity"
             />
 </template>
